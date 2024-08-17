@@ -9,6 +9,7 @@ import AIcon from 'react-native-vector-icons/AntDesign';
 import ExpandableView from '../ExpandableView/ExpandableView';
 import RotateIcon from '../RotateIcon/RotateIcon';
 import {cardStyle, success} from '../../globalStyles';
+import MovieDescription from '../MovieDescription/MovieDescription';
 
 export default function MovieCard({
   movie,
@@ -20,7 +21,7 @@ export default function MovieCard({
   const {addToFavorites, removeFromFavorites, toggleShowMore} = useMoviesStore(
     state => state,
   );
-  const {data: movieData} = useQuery({
+  const {data: movieData, isLoading} = useQuery({
     queryKey: ['movies', movie.imdbID],
     queryFn: getMovie,
   });
@@ -31,22 +32,8 @@ export default function MovieCard({
         toggleShowMore(movie);
       }}>
       <View style={[styles.container, cardStyle({})]}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            columnGap: 5,
-          }}>
-          <Text
-            style={{
-              flex: 1,
-              color: 'black',
-              fontWeight: 'bold',
-              fontSize: 16,
-            }}>
-            {movie.Title}
-          </Text>
+        <View style={styles.cardContainer}>
+          <Text style={styles.cardTitle}>{movie.Title}</Text>
           <RotateIcon duration={duration} rotate={movie.showMore}>
             <AIcon name="caretup" color="black" />
           </RotateIcon>
@@ -62,7 +49,10 @@ export default function MovieCard({
               <Image source={{uri: movie.Poster}} style={styles.poster} />
               <View style={styles.info}>
                 <Text style={styles.title}>{movie.Title}</Text>
-                <Text style={styles.desc}>{movieData?.Plot}</Text>
+                <MovieDescription
+                  isLoading={isLoading}
+                  description={movieData?.Plot}
+                />
                 <Button
                   color={movie.favorite ? 'red' : success}
                   title={movie.favorite ? 'Unfavorite' : 'Favorite'}
@@ -87,6 +77,18 @@ export default function MovieCard({
 const styles = StyleSheet.create({
   container: {
     columnGap: 10,
+  },
+  cardContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    columnGap: 5,
+  },
+  cardTitle: {
+    flex: 1,
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   title: {
     fontWeight: 'bold',

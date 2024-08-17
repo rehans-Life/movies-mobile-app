@@ -2,8 +2,8 @@ import {Animated, StyleSheet} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 
 interface SkeletonProps {
-  height: number;
-  width?: number;
+  height: number | `${number}%`;
+  width?: number | `${number}%`;
   borderRadius?: number;
 }
 
