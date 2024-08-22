@@ -1,9 +1,13 @@
 import {
+  MutationCache,
   QueryCache,
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query';
+import {AxiosError} from 'axios';
 import React, {useState} from 'react';
+import errorHandler from '../utils/errorHandler';
+import {APIError} from '../utils/api';
 
 export default function ReactQueryProvider({
   children,
@@ -20,6 +24,9 @@ export default function ReactQueryProvider({
             onSuccess(data);
           }
         },
+      }),
+      mutationCache: new MutationCache({
+        onError: error => errorHandler(error as AxiosError<APIError>),
       }),
     }),
   );

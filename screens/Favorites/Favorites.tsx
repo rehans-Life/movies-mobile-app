@@ -1,26 +1,53 @@
 /* eslint-disable react-native/no-inline-styles */
-import {View, Text, Modal, Pressable} from 'react-native';
-import React, {useMemo, useState} from 'react';
-import useMoviesStore from '../../stores/moviesStore';
+import {View, Text, Modal} from 'react-native';
+import React, {useState} from 'react';
 import {globalStyles, success} from '../../globalStyles';
 import MoviesList from '../../components/MoviesList/MoviesList';
 import FavoritedMovieCard from '../../components/FavoritedMovieCard/FavoritedMovieCard';
 import CenteredModal from '../../components/CenteredModal/CenteredModal';
 import Button from '../../components/Button/Button';
-import {Movie} from '../../utils/api';
+import {FavoritedMovieId, getFavoritedMovies} from '../../utils/api';
 import ModalContent from '../../components/ModalContent/ModalContent';
+import {useMutation, useQuery} from '@tanstack/react-query';
+import {removeFromFavorites as removeFromFavoritesFN} from '../../utils/api';
+import SkeletonList from '../../components/SkeletonList/SkeletonList';
+import useFavoritedMoviesStore from '../../stores/favoritedMoviesStore';
+import Toast from 'react-native-toast-message';
 
 const Favorites = () => {
-  const {favorites, removeFromFavorites} = useMoviesStore(state => state);
+  const {favorites, removeFromFavorites, setFavoritedMovies} =
+    useFavoritedMoviesStore(state => state);
 
   const [search, setSearch] = useState('');
-  const [movieToBeUnFavorited, setMovieToBeUnFavorited] = useState<Movie>();
+  const [movieToBeUnFavorited, setMovieToBeUnFavorited] =
+    useState<FavoritedMovieId>();
 
-  const filteredFavoritedMovies = useMemo(() => {
-    return favorites.filter(
-      ({Title}) => !search || Title.match(new RegExp(`^${search}`, 'i')),
-    );
-  }, [favorites, search]);
+  const {isFetching} = useQuery({
+    queryKey: ['favorites'],
+    queryFn: getFavoritedMovies,
+    meta: {
+      onSuccess: (favoritedMovies: FavoritedMovieId[]) => {
+        setFavoritedMovies(favoritedMovies);
+      },
+    },
+  });
+
+  const removeFromFavoritesMutation = useMutation({
+    mutationFn: removeFromFavoritesFN,
+    onSuccess() {
+      if (!movieToBeUnFavorited) {
+        return;
+      }
+      removeFromFavorites(movieToBeUnFavorited.movieId);
+      setMovieToBeUnFavorited(undefined);
+    },
+  });
+
+  const onCloseModal = () => {
+    if (!removeFromFavoritesMutation.isPending) {
+      setMovieToBeUnFavorited(undefined);
+    }
+  };
 
   return (
     <View style={globalStyles.container}>
@@ -28,22 +55,20 @@ const Favorites = () => {
         visible={Boolean(movieToBeUnFavorited)}
         transparent
         animationType="fade"
-        onRequestClose={() => {
-          setMovieToBeUnFavorited(undefined);
-        }}>
-        <CenteredModal onPressedOut={() => setMovieToBeUnFavorited(undefined)}>
+        onRequestClose={onCloseModal}>
+        <CenteredModal onPressedOut={onCloseModal}>
           <ModalContent
             heading="Are you Sure?"
             description="Are you sure you want to unfavorite this movie."
             actions={[
               <Button
+                disabled={removeFromFavoritesMutation.isPending}
                 key="yes"
                 text="Yes"
                 onPress={() => {
                   if (movieToBeUnFavorited) {
-                    removeFromFavorites(movieToBeUnFavorited);
+                    removeFromFavoritesMutation.mutate(movieToBeUnFavorited);
                   }
-                  setMovieToBeUnFavorited(undefined);
                 }}
                 buttonStyle={{
                   backgroundColor: success,
@@ -53,7 +78,7 @@ const Favorites = () => {
               <Button
                 key="cancel"
                 text="Cancel"
-                onPress={() => setMovieToBeUnFavorited(undefined)}
+                onPress={onCloseModal}
                 buttonStyle={{
                   backgroundColor: 'red',
                   minWidth: 100,
@@ -62,9 +87,11 @@ const Favorites = () => {
             ]}
           />
         </CenteredModal>
+        <Toast />
       </Modal>
       <MoviesList
-        movies={filteredFavoritedMovies}
+        keyToBeExtracted="movieId"
+        movies={favorites}
         enableSearch
         heading="Favorited Movies"
         searchValue={search}
@@ -73,18 +100,20 @@ const Favorites = () => {
         searchPlaceholder="Filter By Name"
         renderMovie={({movie}) => {
           return (
-            <Pressable
-              onPress={() => {
-                setMovieToBeUnFavorited(movie);
-              }}>
-              <FavoritedMovieCard movie={movie} />
-            </Pressable>
+            <FavoritedMovieCard
+              movie={movie}
+              onPress={() => setMovieToBeUnFavorited(movie)}
+            />
           );
         }}
         empty={
-          <Text style={globalStyles.emptyText}>
-            • You have not favorited any movies yet.
-          </Text>
+          isFetching ? (
+            <SkeletonList number={6} height={60} borderRadius={10} />
+          ) : (
+            <Text style={globalStyles.emptyText}>
+              • You have not favorited any movies yet.
+            </Text>
+          )
         }
       />
     </View>

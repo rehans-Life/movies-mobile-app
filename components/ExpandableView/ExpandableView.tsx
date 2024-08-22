@@ -2,10 +2,12 @@ import {Animated, View, StyleSheet} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 
 const ExpandableView = ({
+  animatedKey,
   expand = true,
   duration = 500,
   children,
 }: {
+  animatedKey: string;
   expand?: boolean;
   duration?: number;
   children: React.ReactElement;
@@ -19,10 +21,13 @@ const ExpandableView = ({
       duration: duration,
       useNativeDriver: false,
     }).start();
-  }, [animatedHeight, viewHeight, expand, duration]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expand]);
 
   return (
-    <Animated.View style={[styles.animatedContainer, {height: animatedHeight}]}>
+    <Animated.View
+      key={animatedKey}
+      style={[styles.animatedContainer, {height: animatedHeight}]}>
       <View
         style={styles.wrapper}
         onLayout={event => {

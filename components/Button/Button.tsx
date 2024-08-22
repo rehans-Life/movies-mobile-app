@@ -5,15 +5,20 @@ const Button = ({
   text,
   buttonStyle,
   textStyle,
+  disabled = false,
   onPress,
 }: {
   text?: string;
+  disabled?: boolean;
   onPress?: () => void;
   buttonStyle?: ViewStyle;
   textStyle?: TextStyle;
 }) => {
   return (
-    <Pressable style={[styles.button, buttonStyle]} onPress={onPress}>
+    <Pressable
+      disabled={disabled}
+      style={[styles.button, buttonStyle, disabled ? styles.disabled : {}]}
+      onPress={onPress}>
       {text && <Text style={[styles.text, textStyle]}>{text}</Text>}
     </Pressable>
   );
@@ -30,6 +35,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontWeight: 500,
+  },
+  disabled: {
+    backgroundColor: 'lightgray',
   },
 });
 

@@ -1,15 +1,29 @@
 /* eslint-disable react-native/no-inline-styles */
-import {View, Text, Button, StyleSheet, Image, Pressable} from 'react-native';
-import React from 'react';
-import {getMovie, Movie} from '../../utils/api';
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  Image,
+  Pressable,
+  GestureResponderEvent,
+} from 'react-native';
+import React, {useMemo} from 'react';
+import {
+  addToFavorites as addToFavoritesFn,
+  getMovie,
+  Movie,
+  removeFromFavorites as removeFromFavoritesFn,
+} from '../../utils/api';
 import useMoviesStore from '../../stores/moviesStore';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery} from '@tanstack/react-query';
 import Seperator from '../Seperator/Seperator';
 import AIcon from 'react-native-vector-icons/AntDesign';
 import ExpandableView from '../ExpandableView/ExpandableView';
 import RotateIcon from '../RotateIcon/RotateIcon';
 import {cardStyle, success} from '../../globalStyles';
 import MovieDescription from '../MovieDescription/MovieDescription';
+import useFavoritedMoviesStore from '../../stores/favoritedMoviesStore';
 
 export default function MovieCard({
   movie,
@@ -18,19 +32,49 @@ export default function MovieCard({
   movie: Movie;
   duration: number;
 }) {
-  const {addToFavorites, removeFromFavorites, toggleShowMore} = useMoviesStore(
-    state => state,
-  );
+  const toggleShowMore = useMoviesStore(state => state.toggleShowMore);
+  const {addToFavorites, removeFromFavorites, favorites} =
+    useFavoritedMoviesStore(state => state);
+
   const {data: movieData, isLoading} = useQuery({
     queryKey: ['movies', movie.imdbID],
+    staleTime: Infinity,
     queryFn: getMovie,
   });
 
+  const removeFromFavoritesMutation = useMutation({
+    mutationFn: removeFromFavoritesFn,
+    onSuccess: () => removeFromFavorites(movie.imdbID),
+  });
+
+  const addToFavoritesMutation = useMutation({
+    mutationFn: addToFavoritesFn,
+    onSuccess: () => addToFavorites(movie.imdbID),
+  });
+
+  const isFavorited = useMemo(() => {
+    return favorites.some(({movieId}) => movieId === movie.imdbID);
+  }, [favorites, movie]);
+
+  function toggleFavorite(e: GestureResponderEvent) {
+    e.stopPropagation();
+    if (isFavorited) {
+      removeFromFavoritesMutation.mutate({
+        movieId: movie.imdbID,
+      });
+      return;
+    }
+    addToFavoritesMutation.mutate({
+      movieId: movie.imdbID,
+    });
+  }
+
+  function showMore() {
+    toggleShowMore(movie);
+  }
+
   return (
-    <Pressable
-      onPress={_ => {
-        toggleShowMore(movie);
-      }}>
+    <Pressable onPress={showMore}>
       <View style={[styles.container, cardStyle({})]}>
         <View style={styles.cardContainer}>
           <Text style={styles.cardTitle}>{movie.Title}</Text>
@@ -38,7 +82,10 @@ export default function MovieCard({
             <AIcon name="caretup" color="black" />
           </RotateIcon>
         </View>
-        <ExpandableView expand={movie.showMore} duration={duration}>
+        <ExpandableView
+          animatedKey={movie.imdbID}
+          expand={movie.showMore}
+          duration={duration}>
           <>
             <Seperator />
             <View
@@ -54,16 +101,13 @@ export default function MovieCard({
                   description={movieData?.Plot}
                 />
                 <Button
-                  color={movie.favorite ? 'red' : success}
-                  title={movie.favorite ? 'Unfavorite' : 'Favorite'}
-                  onPress={e => {
-                    e.stopPropagation();
-                    if (movie.favorite) {
-                      removeFromFavorites(movie);
-                      return;
-                    }
-                    addToFavorites(movie);
-                  }}
+                  disabled={
+                    removeFromFavoritesMutation.isPending ||
+                    addToFavoritesMutation.isPending
+                  }
+                  color={isFavorited ? 'red' : success}
+                  title={isFavorited ? 'Unfavorite' : 'Favorite'}
+                  onPress={toggleFavorite}
                 />
               </View>
             </View>

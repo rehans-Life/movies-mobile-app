@@ -1,7 +1,7 @@
 import {Animated, StyleSheet} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 
-interface SkeletonProps {
+export interface SkeletonProps {
   height: number | `${number}%`;
   width?: number | `${number}%`;
   borderRadius?: number;

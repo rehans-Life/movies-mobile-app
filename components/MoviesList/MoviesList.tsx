@@ -2,12 +2,11 @@
 import React, {useRef} from 'react';
 import {FlatList, StyleSheet, Text, View} from 'react-native';
 import Seperator from '../Seperator/Seperator';
-import {Movie} from '../../utils/api';
 import {globalStyles} from '../../globalStyles';
 import Input from '../Input/Input';
 
-interface RenderMovie {
-  movie: Movie;
+interface RenderMovie<T> {
+  movie: T;
   index: number;
   flatList: FlatList | null;
 }
@@ -24,11 +23,12 @@ interface MovieListWithoutSearchProps {
   enableSearch: false;
 }
 
-interface MovieListProps {
+interface MovieListProps<T> {
+  keyToBeExtracted?: string;
   heading: string;
-  movies: Movie[];
+  movies: T[];
   empty: React.ReactElement;
-  renderMovie: (args: RenderMovie) => React.ReactElement;
+  renderMovie: (args: RenderMovie<T>) => React.ReactElement;
 }
 
 function isMovieSearchProps(obj: any): obj is MovieListWithSearchProps {
@@ -38,21 +38,23 @@ function isMovieSearchProps(obj: any): obj is MovieListWithSearchProps {
   return obj.enableSearch === true && 'searchValue' in obj && 'onSearch' in obj;
 }
 
-export default function MoviesList({
+export default function MoviesList<T>({
+  keyToBeExtracted = 'imdbID',
   heading = 'Movies',
   empty,
   movies,
   renderMovie,
   ...props
-}: MovieListProps & (MovieListWithSearchProps | MovieListWithoutSearchProps)) {
+}: MovieListProps<T> &
+  (MovieListWithSearchProps | MovieListWithoutSearchProps)) {
   const listRef = useRef<FlatList>(null);
 
   return (
-    <FlatList<Movie>
+    <FlatList
       ref={listRef}
       contentContainerStyle={styles.listContentStyle}
       data={movies}
-      keyExtractor={({imdbID}) => imdbID}
+      keyExtractor={item => item[keyToBeExtracted]}
       renderItem={({item: movie, index}) => {
         return renderMovie({movie, index, flatList: listRef.current});
       }}

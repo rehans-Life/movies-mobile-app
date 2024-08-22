@@ -1,72 +1,80 @@
-/* eslint-disable react/no-unstable-nested-components */
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import {StatusBar, useColorScheme} from 'react-native';
+import {StatusBar, StyleSheet} from 'react-native';
 
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 import ReactQueryProvider from './providers/ReactQueryProvider';
-import Movies from './screens/Movies/Movies';
-import Favorites from './screens/Favorites/Favorites';
-import {NavigationContainer} from '@react-navigation/native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import AIcon from 'react-native-vector-icons/AntDesign';
+import {withAuthenticator} from '@aws-amplify/ui-react-native';
+import Toast, {
+  ErrorToast,
+  SuccessToast,
+  ToastConfig,
+} from 'react-native-toast-message';
 
-const Tab = createBottomTabNavigator();
+import {Amplify} from 'aws-amplify';
+import Main from './screens/Main/Main';
+
+const toastConfig: ToastConfig = {
+  error: props => (
+    <ErrorToast {...props} style={[styles.toast, styles.toastError]} />
+  ),
+  success: props => (
+    <SuccessToast {...props} style={[styles.toast, styles.toastSuccess]} />
+  ),
+};
+
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      userPoolClientId: process.env.USER_POOL_CLIENT_ID!,
+      userPoolId: process.env.USER_POOL_ID!,
+      identityPoolId: '',
+      loginWith: {
+        username: true,
+        email: true,
+      },
+      userAttributes: {
+        email: {
+          required: true,
+        },
+      },
+      allowGuestAccess: false,
+      signUpVerificationMethod: 'code',
+      mfa: {
+        status: 'off',
+      },
+      passwordFormat: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireNumbers: true,
+        requireSpecialCharacters: true,
+      },
+    },
+  },
+});
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: 'white',
   };
 
   return (
     <ReactQueryProvider>
       <>
         <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+          barStyle={'dark-content'}
           backgroundColor={backgroundStyle.backgroundColor}
         />
-        <NavigationContainer>
-          <Tab.Navigator
-            initialRouteName="Movies"
-            screenOptions={{
-              headerShown: false,
-              tabBarActiveTintColor: 'red',
-              tabBarLabelStyle: {
-                fontSize: 14,
-                fontWeight: 500,
-              },
-            }}>
-            <Tab.Screen
-              name="Movies"
-              component={Movies}
-              options={{
-                tabBarIcon: ({size, color}) => (
-                  <AIcon name="camera" color={color} size={size} />
-                ),
-              }}
-            />
-            <Tab.Screen
-              name="Favorites"
-              component={Favorites}
-              options={{
-                tabBarIcon: ({size, color}) => (
-                  <AIcon name="star" color={color} size={size} />
-                ),
-              }}
-            />
-          </Tab.Navigator>
-        </NavigationContainer>
+        <Main />
+        <Toast config={toastConfig} />
       </>
     </ReactQueryProvider>
   );
 }
 
-export default App;
+const styles = StyleSheet.create({
+  toastError: {borderLeftColor: 'red'},
+  toastSuccess: {borderLeftColor: 'green'},
+  toast: {borderLeftColor: 'red', width: '95%'},
+});
+
+export default withAuthenticator(App);

@@ -1,23 +1,40 @@
-import {useQuery, keepPreviousData} from '@tanstack/react-query';
+import {useQuery} from '@tanstack/react-query';
 import React from 'react';
 import {View, Text} from 'react-native';
 import useMoviesStore from '../../stores/moviesStore';
-import {getMovies, Movie} from '../../utils/api';
+import {
+  FavoritedMovieId,
+  getFavoritedMovies,
+  getMovies,
+  Movie,
+} from '../../utils/api';
 import {globalStyles} from '../../globalStyles';
 import MoviesList from '../../components/MoviesList/MoviesList';
-import Skeleton from '../../components/Skeleton/Skeleton';
-import Seperator from '../../components/Seperator/Seperator';
 import MovieCard from '../../components/MovieCard/MovieCard';
+import SkeletonList from '../../components/SkeletonList/SkeletonList';
+import useFavoritedMoviesStore from '../../stores/favoritedMoviesStore';
 
 export default function Movies() {
-  const {movies, favorites, setMovies, search, setSearch} = useMoviesStore(
-    state => state,
-  );
+  const {movies, setMovies, search, setSearch} = useMoviesStore(state => state);
+  const {setFavoritedMovies} = useFavoritedMoviesStore();
 
-  const {isFetching} = useQuery({
+  const favoritedMoviesQuery = useQuery({
+    queryKey: ['favorites'],
+    queryFn: getFavoritedMovies,
+    meta: {
+      onSuccess: (favoritedMovies: FavoritedMovieId[]) => {
+        setFavoritedMovies(favoritedMovies);
+      },
+    },
+  });
+
+  const moviesQuery = useQuery({
     queryKey: ['movies', search],
     queryFn: getMovies,
-    placeholderData: keepPreviousData,
+    enabled: favoritedMoviesQuery.isFetched,
+    throwOnError() {
+      return false;
+    },
     meta: {
       onSuccess: (newMovies: Movie[]) => {
         setMovies(
@@ -25,9 +42,6 @@ export default function Movies() {
             return {
               ...movie,
               showMore: index === 0,
-              favorite: favorites.some(
-                favoritedMovie => movie.imdbID === favoritedMovie.imdbID,
-              ),
             };
           }),
         );
@@ -50,17 +64,8 @@ export default function Movies() {
           return <MovieCard movie={movie} duration={duration} />;
         }}
         empty={
-          isFetching ? (
-            <View>
-              {Array(6)
-                .fill(0)
-                .map((_, i) => (
-                  <View key={i}>
-                    <Skeleton height={60} borderRadius={10} />
-                    <Seperator />
-                  </View>
-                ))}
-            </View>
+          moviesQuery.isFetching || favoritedMoviesQuery.isLoading ? (
+            <SkeletonList number={6} height={60} borderRadius={10} />
           ) : (
             <Text style={globalStyles.emptyText}>
               • No Movies Found with the name "{search}"
