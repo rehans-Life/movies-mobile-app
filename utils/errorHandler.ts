@@ -1,5 +1,5 @@
 import {AxiosError} from 'axios';
-import {APIError} from './api';
+import {APIError} from './interfaces';
 import Toast from 'react-native-toast-message';
 import {StyleSheet} from 'react-native';
 

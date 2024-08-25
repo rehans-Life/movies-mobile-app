@@ -1,13 +1,9 @@
 import {useQuery} from '@tanstack/react-query';
-import React from 'react';
+import React, {useMemo} from 'react';
 import {View, Text} from 'react-native';
 import useMoviesStore from '../../stores/moviesStore';
-import {
-  FavoritedMovieId,
-  getFavoritedMovies,
-  getMovies,
-  Movie,
-} from '../../utils/api';
+import {getFavoritedMovies, getMovies} from '../../utils/api';
+import {FavoritedMovieId, Movie} from '../../utils/interfaces';
 import {globalStyles} from '../../globalStyles';
 import MoviesList from '../../components/MoviesList/MoviesList';
 import MovieCard from '../../components/MovieCard/MovieCard';
@@ -15,7 +11,11 @@ import SkeletonList from '../../components/SkeletonList/SkeletonList';
 import useFavoritedMoviesStore from '../../stores/favoritedMoviesStore';
 
 export default function Movies() {
-  const {movies, setMovies, search, setSearch} = useMoviesStore(state => state);
+  const movies = useMoviesStore(state => state.movies);
+  const search = useMoviesStore(state => state.search);
+  const setSearch = useMoviesStore(state => state.setSearch);
+  const setMovies = useMoviesStore(state => state.setMovies);
+
   const {setFavoritedMovies} = useFavoritedMoviesStore();
 
   const favoritedMoviesQuery = useQuery({
@@ -29,12 +29,9 @@ export default function Movies() {
   });
 
   const moviesQuery = useQuery({
-    queryKey: ['movies', search],
+    queryKey: ['movies'],
     queryFn: getMovies,
     enabled: favoritedMoviesQuery.isFetched,
-    throwOnError() {
-      return false;
-    },
     meta: {
       onSuccess: (newMovies: Movie[]) => {
         setMovies(
@@ -49,6 +46,12 @@ export default function Movies() {
     },
   });
 
+  const filteredMovies = useMemo(() => {
+    return movies.filter(movie =>
+      movie.Title.match(new RegExp(`^${search}`, 'i')),
+    );
+  }, [search, movies]);
+
   return (
     <View style={globalStyles.container}>
       <MoviesList
@@ -58,7 +61,7 @@ export default function Movies() {
         searchPlaceholder="Search By Name"
         searchValue={search}
         onSearch={setSearch}
-        movies={movies}
+        movies={filteredMovies}
         renderMovie={({movie}) => {
           const duration = 300;
           return <MovieCard movie={movie} duration={duration} />;

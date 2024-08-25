@@ -12,9 +12,9 @@ import React, {useMemo} from 'react';
 import {
   addToFavorites as addToFavoritesFn,
   getMovie,
-  Movie,
   removeFromFavorites as removeFromFavoritesFn,
 } from '../../utils/api';
+import {Movie} from '../../utils/interfaces';
 import useMoviesStore from '../../stores/moviesStore';
 import {useMutation, useQuery} from '@tanstack/react-query';
 import Seperator from '../Seperator/Seperator';
@@ -33,6 +33,10 @@ export default function MovieCard({
   duration: number;
 }) {
   const toggleShowMore = useMoviesStore(state => state.toggleShowMore);
+  const showMoreMovieId = useMoviesStore(state => state.showMoreMovieId);
+
+  const expand = showMoreMovieId === movie.imdbID;
+
   const {addToFavorites, removeFromFavorites, favorites} =
     useFavoritedMoviesStore(state => state);
 
@@ -69,22 +73,22 @@ export default function MovieCard({
     });
   }
 
-  function showMore() {
+  function onExpand() {
     toggleShowMore(movie);
   }
 
   return (
-    <Pressable onPress={showMore}>
+    <Pressable onPress={onExpand}>
       <View style={[styles.container, cardStyle({})]}>
         <View style={styles.cardContainer}>
           <Text style={styles.cardTitle}>{movie.Title}</Text>
-          <RotateIcon duration={duration} rotate={movie.showMore}>
+          <RotateIcon duration={duration} rotate={expand}>
             <AIcon name="caretup" color="black" />
           </RotateIcon>
         </View>
         <ExpandableView
           animatedKey={movie.imdbID}
-          expand={movie.showMore}
+          expand={expand}
           duration={duration}>
           <>
             <Seperator />

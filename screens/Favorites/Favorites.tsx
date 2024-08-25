@@ -6,7 +6,8 @@ import MoviesList from '../../components/MoviesList/MoviesList';
 import FavoritedMovieCard from '../../components/FavoritedMovieCard/FavoritedMovieCard';
 import CenteredModal from '../../components/CenteredModal/CenteredModal';
 import Button from '../../components/Button/Button';
-import {FavoritedMovieId, getFavoritedMovies} from '../../utils/api';
+import {getFavoritedMovies} from '../../utils/api';
+import {FavoritedMovieId} from '../../utils/interfaces';
 import ModalContent from '../../components/ModalContent/ModalContent';
 import {useMutation, useQuery} from '@tanstack/react-query';
 import {removeFromFavorites as removeFromFavoritesFN} from '../../utils/api';
@@ -18,7 +19,6 @@ const Favorites = () => {
   const {favorites, removeFromFavorites, setFavoritedMovies} =
     useFavoritedMoviesStore(state => state);
 
-  const [search, setSearch] = useState('');
   const [movieToBeUnFavorited, setMovieToBeUnFavorited] =
     useState<FavoritedMovieId>();
 
@@ -49,6 +49,12 @@ const Favorites = () => {
     }
   };
 
+  const onUnFavoriteMovie = () => {
+    if (movieToBeUnFavorited) {
+      removeFromFavoritesMutation.mutate(movieToBeUnFavorited);
+    }
+  };
+
   return (
     <View style={globalStyles.container}>
       <Modal
@@ -65,11 +71,7 @@ const Favorites = () => {
                 disabled={removeFromFavoritesMutation.isPending}
                 key="yes"
                 text="Yes"
-                onPress={() => {
-                  if (movieToBeUnFavorited) {
-                    removeFromFavoritesMutation.mutate(movieToBeUnFavorited);
-                  }
-                }}
+                onPress={onUnFavoriteMovie}
                 buttonStyle={{
                   backgroundColor: success,
                   minWidth: 100,
@@ -92,12 +94,8 @@ const Favorites = () => {
       <MoviesList
         keyToBeExtracted="movieId"
         movies={favorites}
-        enableSearch
+        enableSearch={false}
         heading="Favorited Movies"
-        searchValue={search}
-        onSearch={setSearch}
-        searchLabel="Search for Movies"
-        searchPlaceholder="Filter By Name"
         renderMovie={({movie}) => {
           return (
             <FavoritedMovieCard

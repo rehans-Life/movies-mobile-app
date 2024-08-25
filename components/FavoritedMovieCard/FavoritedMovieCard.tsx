@@ -6,7 +6,8 @@ import {
   Pressable,
 } from 'react-native';
 import React from 'react';
-import {FavoritedMovieId, getMovie} from '../../utils/api';
+import {getMovie} from '../../utils/api';
+import {FavoritedMovieId} from '../../utils/interfaces';
 import AIcon from 'react-native-vector-icons/AntDesign';
 import {cardStyle} from '../../globalStyles';
 import {useQuery} from '@tanstack/react-query';

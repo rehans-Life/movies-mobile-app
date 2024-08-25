@@ -1,5 +1,5 @@
 import {create} from 'zustand';
-import {FavoritedMovieId} from '../utils/api';
+import {FavoritedMovieId} from '../utils/interfaces';
 
 interface FavoritedMovieStore {
   favorites: FavoritedMovieId[];

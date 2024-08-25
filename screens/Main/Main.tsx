@@ -10,7 +10,6 @@ import AIcon from 'react-native-vector-icons/AntDesign';
 import {AuthTokens, fetchAuthSession} from 'aws-amplify/auth';
 import {useQuery} from '@tanstack/react-query';
 import Splash from '../Splash/Splash';
-import useUserStore from '../../stores/userStore';
 import axios from '../../utils/axios';
 import useFavoritedMoviesStore from '../../stores/favoritedMoviesStore';
 import Header from '../../components/Header/Header';
@@ -21,7 +20,6 @@ const Main = () => {
   const setFavoritedMovies = useFavoritedMoviesStore(
     state => state.setFavoritedMovies,
   );
-  const {setAuthTokens} = useUserStore(state => state);
 
   const {isFetching} = useQuery({
     queryKey: ['tokens'],
@@ -36,8 +34,6 @@ const Main = () => {
         if (!tokens) {
           return;
         }
-
-        setAuthTokens(tokens);
 
         axios.interceptors.request.clear();
         axios.interceptors.request.use(request => {

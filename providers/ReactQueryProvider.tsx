@@ -7,7 +7,7 @@ import {
 import {AxiosError} from 'axios';
 import React, {useState} from 'react';
 import errorHandler from '../utils/errorHandler';
-import {APIError} from '../utils/api';
+import {APIError} from '../utils/interfaces';
 
 export default function ReactQueryProvider({
   children,

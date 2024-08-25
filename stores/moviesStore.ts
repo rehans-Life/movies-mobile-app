@@ -1,8 +1,9 @@
 import {create} from 'zustand';
-import {Movie} from '../utils/api';
+import {Movie} from '../utils/interfaces';
 
 interface MoviesStore {
   search: string;
+  showMoreMovieId: string;
   movies: Movie[];
   toggleShowMore: (toggleMovie: Movie) => void;
   setSearch: (search: string) => void;
@@ -10,17 +11,14 @@ interface MoviesStore {
 }
 
 const useMoviesStore = create<MoviesStore>(set => ({
-  search: 'Batman',
+  search: '',
+  showMoreMovieId: '',
   movies: [],
   toggleShowMore: (toggleMovie: Movie) =>
     set(state => ({
       ...state,
-      movies: state.movies.map(movie => {
-        if (toggleMovie.imdbID === movie.imdbID) {
-          return {...toggleMovie, showMore: !toggleMovie.showMore};
-        }
-        return {...movie, showMore: false};
-      }),
+      showMoreMovieId:
+        state.showMoreMovieId === toggleMovie.imdbID ? '' : toggleMovie.imdbID,
     })),
   setSearch: (search: string) => set(state => ({...state, search})),
   setMovies: (movies: Movie[]) => set(state => ({...state, movies})),
