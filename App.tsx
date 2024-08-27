@@ -11,6 +11,7 @@ import Toast, {
 
 import {Amplify} from 'aws-amplify';
 import Main from './screens/Main/Main';
+import {USER_POOL_CLIENT_ID, USER_POOL_ID} from '@env';
 
 const toastConfig: ToastConfig = {
   error: props => (
@@ -24,8 +25,8 @@ const toastConfig: ToastConfig = {
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolClientId: process.env.USER_POOL_CLIENT_ID!,
-      userPoolId: process.env.USER_POOL_ID!,
+      userPoolClientId: USER_POOL_CLIENT_ID!,
+      userPoolId: USER_POOL_ID!,
       identityPoolId: '',
       loginWith: {
         username: true,
